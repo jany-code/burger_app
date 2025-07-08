@@ -1,0 +1,109 @@
+{% extends 'administrador/layout.html' %}
+{% load static %}
+{% load humanize %}
+{% block title %}
+    Lista de stock de items
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid"> 
+        <h1>Stock de items</h1>
+        <div class="d-flex gap-2 mb-3">
+            <a href="{% url 'administrador:crear_stock' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Nuevo Ítem
+            </a>
+            <a href="{% url 'administrador:lista_items' %}" class="btn btn-success">
+                <i class="bi bi-box-seam"></i> Ítems
+            </a>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-center">
+                    <div class="col-md-8">
+                        <input type="text" name="q" placeholder="Buscar ítem o proveedor..." 
+                               class="form-control" value="{{ query }}">
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                        <a href="{% url 'administrador:lista_stock' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise"></i>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-nowrap">Ítem</th>
+                        <th class="text-nowrap">Tipo</th>
+                        <th class="text-nowrap">Unidad</th>
+                        <th class="text-nowrap">Proveedor</th>
+                        <th class="text-nowrap">Mín</th>
+                        <th class="text-nowrap">Máx</th>
+                        <th class="text-nowrap">Disponible</th>
+                        <th class="text-nowrap">Precio Unitario</th>
+                        <th class="text-nowrap">Últ. Entrada</th>
+                        <th class="text-nowrap">Últ. Salida</th>
+                        <th class="text-nowrap">Estado</th>
+                        <th class="text-nowrap">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td>{{ stock.item.nombre }}</td>
+                        <td>{{ stock.item.get_tipo_display }}</td>
+                        <td>{{ stock.item.get_unidad_medida_display }}</td>
+                        <td>{{ stock.proveedor_principal.nombre_empresa|default:"-" }}</td>
+                        <td class="text-end">{{ stock.cant_minima|floatformat:2 }}</td>
+                        <td class="text-end">{{ stock.cant_maxima|floatformat:2 }}</td>
+                        <td class="text-end fw-bold">{{ stock.cant_disponible|floatformat:2 }}</td>
+                        <td class="text-end">{{ stock.precio_unitario|floatformat:0|intcomma }} Gs</td>
+                        <td>{{ stock.fecha_ultima_entrada|date:"d/m/Y"|default:"-" }}</td>
+                        <td>{{ stock.fecha_ultima_salida|date:"d/m/Y"|default:"-" }}</td>
+                        <td>
+                            {% if stock.cant_minima > 0 and stock.cant_disponible < stock.cant_minima %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Bajo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle-fill"></i> OK
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-nowrap">
+                            <a href="{% url 'administrador:editar_stock' stock.id %}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'administrador:eliminar_stock' stock.id %}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('¿Seguro que deseas eliminar este ítem del stock?');">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center py-4 text-muted">
+                            <i class="bi bi-database-exclamation"></i>
+                            {% if query %}
+                                No se encontraron items con "{{ query }}"
+                            {% else %}
+                                No hay items en stock
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

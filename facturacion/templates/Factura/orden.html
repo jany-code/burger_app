@@ -1,0 +1,381 @@
+Opción 3:
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brother's Burger - Gestión de Pedidos</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .badge-paid {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .badge-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        .badge-failed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .badge-processing {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        .badge-delivered {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-cancelled {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        .filter-tabs .nav-link {
+            color: #495057;
+            border: none;
+            padding: 8px 15px;
+        }
+        .filter-tabs .nav-link.active {
+            color: #dc3545;
+            border-bottom: 2px solid #dc3545;
+            background: transparent;
+            font-weight: 600;
+        }
+        .order-row:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-3">
+        <h2 class="mb-4">Gestión de Pedidos</h2>
+        
+        <!-- Filtros -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <ul class="nav filter-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-filter="all">Todos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="pending">Pago pendiente <span class="badge bg-secondary">6</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="completed">Completado <span class="badge bg-secondary">5,816</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="failed">Incumplido <span class="badge bg-secondary">17</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-filter="refunded">Reembolsado <span class="badge bg-secondary">8</span></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Filtros adicionales -->
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="d-flex align-items-center">
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" id="searchCheck">
+                        <label class="form-check-label" for="searchCheck">Búsqueda avanzada</label>
+                    </div>
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" id="paymentStatusCheck" checked>
+                        <label class="form-check-label" for="paymentStatusCheck">Estado de pago</label>
+                    </div>
+                    <div class="form-check me-3">
+                        <input class="form-check-input" type="checkbox" id="fulfillmentStatusCheck">
+                        <label class="form-check-label" for="fulfillmentStatusCheck">Estado de cumplimiento</label>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary ms-auto">
+                        <i class="fas fa-filter"></i> Más filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabla de pedidos -->
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ORDEN</th>
+                        <th>TOTAL</th>
+                        <th>CLIENTE</th>
+                        <th>ESTADO DE PAGO</th>
+                        <th>ESTADO DE CUMPLIMIENTO</th>
+                        <th>TIPO DE ENTREGA</th>
+                        <th>FECHA</th>
+                        <th>ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <!-- Las filas se generarán dinámicamente con JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginación -->
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                        </li>
+                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">Siguiente</a>
+                        </li>
+                    </ul>
+                </nav>
+                <div class="text-center text-muted">
+                    Mostrando 1 a 10 de 30 pedidos
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para cambiar estado -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cambiar estado del pedido <span id="modalOrderId"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Estado de pago</label>
+                        <select class="form-select" id="paymentStatusSelect">
+                            <option value="paid">Pagado</option>
+                            <option value="pending">Pago pendiente</option>
+                            <option value="failed">Pago fallido</option>
+                            <option value="refunded">Reembolsado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Estado de cumplimiento</label>
+                        <select class="form-select" id="fulfillmentStatusSelect">
+                            <option value="processing">En preparación</option>
+                            <option value="ready">Listo para entrega</option>
+                            <option value="delivered">Entregado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveStatusBtn">Guardar cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Datos de ejemplo para los pedidos
+        const orders = [
+            {
+                id: "#BB-243",
+                total: "$87.00",
+                customer: "Libra a Anna",
+                paymentStatus: "paid",
+                fulfillmentStatus: "cancelled",
+                deliveryType: "Contra reembolso",
+                date: "12 de diciembre, 12:56 p.m.",
+                items: ["Hamburguesa Clásica x2", "Papas fritas grande", "Refresco"]
+            },
+            {
+                id: "#BB-242",
+                total: "$75.50",
+                customer: "Metro-Milial-Minja",
+                paymentStatus: "pending",
+                fulfillmentStatus: "processing",
+                deliveryType: "Delivery",
+                date: "9 de diciembre, 14:00",
+                items: ["Hamburguesa BBQ", "Onion rings", "Batido de vainilla"]
+            },
+            {
+                id: "#BB-241",
+                total: "$37.50",
+                customer: "Stanny Drinkwater",
+                paymentStatus: "processing",
+                fulfillmentStatus: "ready",
+                deliveryType: "Recogida en local",
+                date: "4 de diciembre, 12:36 p.m.",
+                items: ["Hamburguesa Doble", "Papas fritas mediana"]
+            },
+            {
+                id: "#BB-240",
+                total: "$65.70",
+                customer: "José Brandesky",
+                paymentStatus: "failed",
+                fulfillmentStatus: "processing",
+                deliveryType: "Delivery estándar",
+                date: "1 de diciembre, 4:07 a.m.",
+                items: ["Combo Familiar", "Postre brownie"]
+            },
+            {
+                id: "#BB-239",
+                total: "$96.30",
+                customer: "Igor Brandham",
+                paymentStatus: "failed",
+                fulfillmentStatus: "delivered",
+                deliveryType: "Express",
+                date: "28 de noviembre, 19:28",
+                items: ["Hamburguesa Vegana", "Ensalada César"]
+            },
+            {
+                id: "#BB-238",
+                total: "$46.00",
+                customer: "Katerina Karenin",
+                paymentStatus: "failed",
+                fulfillmentStatus: "cancelled",
+                deliveryType: "Recogida en local",
+                date: "24 de noviembre, 10:26 p.m.",
+                items: ["Hamburguesa Picante", "Refresco"]
+            }
+        ];
+
+        // Función para renderizar la tabla
+        function renderOrdersTable(filter = 'all') {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+            
+            let filteredOrders = orders;
+            if (filter !== 'all') {
+                filteredOrders = orders.filter(order => {
+                    if (filter === 'pending') return order.paymentStatus === 'pending';
+                    if (filter === 'completed') return order.fulfillmentStatus === 'delivered';
+                    if (filter === 'failed') return order.paymentStatus === 'failed' || order.fulfillmentStatus === 'cancelled';
+                    if (filter === 'refunded') return order.paymentStatus === 'refunded';
+                    return true;
+                });
+            }
+            
+            filteredOrders.forEach(order => {
+                const row = document.createElement('tr');
+                row.className = 'order-row';
+                row.dataset.id = order.id;
+                
+                // Mapeo de estados a clases y texto
+                const paymentStatusMap = {
+                    'paid': {class: 'badge-paid', text: 'Pagado', icon: 'fa-check-circle'},
+                    'pending': {class: 'badge-pending', text: 'Pendiente', icon: 'fa-clock'},
+                    'failed': {class: 'badge-failed', text: 'Fallido', icon: 'fa-times-circle'},
+                    'processing': {class: 'badge-processing', text: 'Procesando', icon: 'fa-sync-alt'},
+                    'refunded': {class: 'badge-cancelled', text: 'Reembolsado', icon: 'fa-undo'}
+                };
+                
+                const fulfillmentStatusMap = {
+                    'processing': {class: 'badge-processing', text: 'En preparación', icon: 'fa-utensils'},
+                    'ready': {class: 'badge-paid', text: 'Listo', icon: 'fa-check'},
+                    'delivered': {class: 'badge-delivered', text: 'Entregado', icon: 'fa-truck'},
+                    'cancelled': {class: 'badge-cancelled', text: 'Cancelado', icon: 'fa-ban'}
+                };
+                
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${order.total}</td>
+                    <td>${order.customer}</td>
+                    <td>
+                        <span class="status-badge ${paymentStatusMap[order.paymentStatus].class}">
+                            <i class="fas ${paymentStatusMap[order.paymentStatus].icon} me-1"></i>
+                            ${paymentStatusMap[order.paymentStatus].text}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${fulfillmentStatusMap[order.fulfillmentStatus].class}">
+                            <i class="fas ${fulfillmentStatusMap[order.fulfillmentStatus].icon} me-1"></i>
+                            ${fulfillmentStatusMap[order.fulfillmentStatus].text}
+                        </span>
+                    </td>
+                    <td>${order.deliveryType}</td>
+                    <td>${order.date}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary change-status-btn" data-id="${order.id}">
+                            <i class="fas fa-edit"></i> Cambiar
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            // Agregar event listeners a los botones de cambiar estado
+            document.querySelectorAll('.change-status-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const orderId = this.dataset.id;
+                    const order = orders.find(o => o.id === orderId);
+                    
+                    document.getElementById('modalOrderId').textContent = orderId;
+                    document.getElementById('paymentStatusSelect').value = order.paymentStatus;
+                    document.getElementById('fulfillmentStatusSelect').value = order.fulfillmentStatus;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+                    modal.show();
+                });
+            });
+            
+            // Agregar event listener para ver detalles al hacer clic en la fila
+            document.querySelectorAll('.order-row').forEach(row => {
+                row.addEventListener('click', function() {
+                    const orderId = this.dataset.id;
+                    const order = orders.find(o => o.id === orderId);
+                    alert(`Detalles del pedido ${orderId}:\nCliente: ${order.customer}\nTotal: ${order.total}\nProductos:\n- ${order.items.join('\n- ')}`);
+                });
+            });
+        }
+        
+        // Event listeners para los filtros
+        document.querySelectorAll('.filter-tabs .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.filter-tabs .nav-link.active').classList.remove('active');
+                this.classList.add('active');
+                renderOrdersTable(this.dataset.filter);
+            });
+        });
+        
+        // Event listener para guardar cambios de estado
+        document.getElementById('saveStatusBtn').addEventListener('click', function() {
+            const orderId = document.getElementById('modalOrderId').textContent;
+            const newPaymentStatus = document.getElementById('paymentStatusSelect').value;
+            const newFulfillmentStatus = document.getElementById('fulfillmentStatusSelect').value;
+            
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                order.paymentStatus = newPaymentStatus;
+                order.fulfillmentStatus = newFulfillmentStatus;
+                renderOrdersTable(document.querySelector('.filter-tabs .nav-link.active').dataset.filter);
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('statusModal')).hide();
+        });
+        
+        // Inicializar la tabla al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            renderOrdersTable();
+        });
+    </script>
+</body>
+</html>

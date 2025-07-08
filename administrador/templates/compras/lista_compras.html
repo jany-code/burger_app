@@ -1,0 +1,139 @@
+{% extends 'administrador/layout.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+    Lista de Compras
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h1>Gestión de Compras</h1>
+        <a href="{% url 'administrador:crear_compra' %}" class="btn btn-primary mb-3">+ Nueva Compra</a>
+        
+        <div class="card mb-3">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" name="q" placeholder="Buscar por proveedor o número de factura..." 
+                               class="form-control" value="{{ query }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                        <a href="{% url 'administrador:lista_compras' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>N° Factura</th>
+                        <th>Fecha</th>
+                        <th>Proveedor</th>
+                        <th>Estado</th>
+                        <th>Total sin IVA</th>
+                        <th>IVA 5%</th>
+                        <th>IVA 10%</th>
+                        <th>Total</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for compra in compras %}
+                    <tr class="{% if compra.estado == 'ANULADA' %}table-secondary{% endif %}">
+                        <td>{{ compra.numero_factura }}</td>
+                        <td>{{ compra.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ compra.proveedor.nombre_empresa }}</td>
+                         <td>
+                            {% if compra.estado == 'ANULADA' %}
+                                <span class="badge bg-danger">Anulada</span>
+                                <small class="text-muted d-block">{{ compra.fecha_anulacion|date:"d/m/Y" }}</small>
+                            {% else %}
+                                <span class="badge bg-success">Activa</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">{{ compra.total_sin_iva|intcomma }} Gs.</td>
+                        <td class="text-end">{{ compra.iva_5|intcomma }} Gs.</td>
+                        <td class="text-end">{{ compra.iva_10|intcomma }} Gs.</td>
+                        <td class="text-end fw-bold">{{ compra.monto_total|intcomma }} Gs.</td>
+                        <!--<td class="text-center">
+                            <a href="{% url 'administrador:detalle_compra' compra.id %}" title="Ver detalle" style="color: #333;">ⓘ</a>
+                            <a href="{% url 'administrador:editar_compra' compra.id %}" title="Editar" style="color: #333;">🖉</a>
+                            <a href="{% url 'administrador:eliminar_compra' compra.id %}" title="Eliminar" style="color: #333;"
+                            onclick="return confirm('¿Estás seguro de eliminar la compra {{ compra.numero_factura }}?')">🗙</a>
+                        </td>-->
+                        <td class="text-center">
+                            <a href="{% url 'administrador:detalle_compra' compra.id %}" class="btn btn-sm btn-info" title="Ver detalle">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if compra.estado == 'ACTIVA' %}
+                                <button class="btn btn-sm btn-danger" title="Anular" 
+                                        data-bs-toggle="modal" data-bs-target="#anulacionModal"
+                                        data-url="{% url 'administrador:anular_compra' compra.id %}">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            {% if query %}
+                                No se encontraron compras con "{{ query }}"
+                            {% else %}
+                                No hay compras registradas
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Modal de confirmación -->
+        <div class="modal fade" id="anulacionModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title">Anular Compra</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="formAnulacion" method="post" action="">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <p>¿Está seguro que desea anular esta compra?</p>
+                            <div class="mb-3">
+                                <label for="motivoAnulacion" class="form-label">Motivo:</label>
+                                <textarea class="form-control" id="motivoAnulacion" name="motivo_anulacion" required rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-danger">Confirmar Anulación</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{%block extra_js%}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var anulacionModal = document.getElementById('anulacionModal');
+    anulacionModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var url = button.getAttribute('data-url');
+        var form = document.getElementById('formAnulacion');
+        form.action = url;
+    });
+});
+</script>
+
+{%endblock%}
+{% endblock %}
